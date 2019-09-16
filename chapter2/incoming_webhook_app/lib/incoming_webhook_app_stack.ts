@@ -10,17 +10,17 @@ export class IncomingWebhookAppStack extends cdk.Stack {
     super(scope, id, props);
 
     // Lambda Function 作成
-    const lambdaFunction: Function = new Function(this, "sample-incoming-webhook-app", {
-      functionName: "sample-incoming-webhook-app", // 関数名
-      runtime: Runtime.GO_1_X, // ランタイムの指定
-      code: Code.asset("./lambdaSource"), // ソースコードのディレクトリ
-      handler: "main", // handler の指定
-      memorySize: 256, // メモリーの指定
-      timeout: cdk.Duration.seconds(10), // タイムアウト時間
+    const lambdaFunction: Function = new Function(this, "SampleIncomingWebhookApp", {
+      functionName: "sample-incoming-webhook-app", 
+      runtime: Runtime.GO_1_X, 
+      code: Code.asset("./lambdaSource"), 
+      handler: "main", 
+      memorySize: 256, 
+      timeout: cdk.Duration.seconds(10),
       environment: {
-        "webHookUrl":"https://hooks.slack.com/services/xxxxxxxx/xxxxxxxxxxxx/xxxxxxxxxxxxxxxxxxxxxxx",
-        "slackChannel":"xxxxxxxxxxxxxxxxxxxxxxxxx"
-      } // 環境変数
+        "webHookUrl":"https://hooks.slack.com/services/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",
+        "slackChannel":"CMSS8AQPM"
+      } 
     })
 
     //Policyを関数に付加
@@ -28,8 +28,7 @@ export class IncomingWebhookAppStack extends cdk.Stack {
       resources:["*"],
       actions:["ec2:DescribeInstances"],
     }))
-
-
+    
     // STOP EC2 instances rule
     const ec2State = JSON.parse(fs.readFileSync('event_pattern/ec2.json', {encoding: 'utf-8'}));
     const ec2WatchRule = new events.Rule(this, 'ec2WatchRole',{

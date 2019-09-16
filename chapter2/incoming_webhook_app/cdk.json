@@ -1,0 +1,3 @@
+{
+  "app": "npx ts-node bin/incoming_webhook_app.ts"
+}
