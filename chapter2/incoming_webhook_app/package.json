@@ -1,8 +1,8 @@
 {
-  "name": "incoming-webhook-app",
+  "name": "incoming_webhook_app",
   "version": "0.1.0",
   "bin": {
-    "incoming-webhook-app": "bin/incoming-webhook-app.js"
+    "incoming-webhook-app": "bin/incoming_webhook_app.js"
   },
   "scripts": {
     "build": "tsc",
