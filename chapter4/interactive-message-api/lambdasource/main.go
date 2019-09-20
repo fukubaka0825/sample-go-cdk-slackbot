@@ -15,9 +15,9 @@ func interactiveMessageHandler(ctx context.Context, request events.APIGatewayPro
 	APIGatewayProxyResponse, error) {
 	response := events.APIGatewayProxyResponse{}
 
-	botToken := os.Getenv("BOT_TOKEN")
+	signingSecrets := os.Getenv("SIGNING_SECRETS")
 
-	interactiveMessageUsecase := NewInteractionUsecase(botToken)
+	interactiveMessageUsecase := NewInteractionUsecase(signingSecrets)
 	response, err := interactiveMessageUsecase.MakeSlackResponse(request)
 	if err != nil {
 		return response, err

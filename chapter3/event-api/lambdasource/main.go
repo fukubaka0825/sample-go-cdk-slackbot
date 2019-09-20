@@ -55,13 +55,15 @@ func eventApiHandler(ctx context.Context,
 	request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	vals, _ := url.ParseQuery(request.Body)
-	log.Infof("vals:%v type:%T", vals, vals)
+	log.Infof("vals:%v", vals)
+
 	response := events.APIGatewayProxyResponse{}
 
-	botToken := os.Getenv("BOT_TOKEN")
+	//環境変数を取得する
 	channelID := os.Getenv("CHANNEL_ID")
 	botID := os.Getenv("BOT_ID")
 	botOAuth := os.Getenv("BOT_OAUTH")
+	signingSecrets := os.Getenv("SIGNING_SECRETS")
 
 	apiEvent := &ApiEvent{}
 	for key, _ := range vals {
@@ -94,9 +96,12 @@ func eventApiHandler(ctx context.Context,
 		if slackEvent.Channel != channelID {
 			return response, errors.New("channelIDが一致しません")
 		}
-		if apiEvent.Token != botToken {
-			return response, errors.New("botTokenが一致しません")
+
+		if err := verify(signingSecrets, request); err != nil {
+			log.Error(err)
+			return response, err
 		}
+
 		m := strings.Split(strings.TrimSpace(slackEvent.Text), " ")[1:]
 		if len(m) == 0 || (m[0] != "down" && m[0] != "up") {
 			return response, fmt.Errorf("対応外のメッセージです")
@@ -185,6 +190,29 @@ func eventApiHandler(ctx context.Context,
 		return response, nil
 	}
 
+}
+
+func verify(signingSecrets string, request events.APIGatewayProxyRequest) error {
+	httpHeader := http.Header{}
+	for key, value := range request.Headers {
+		httpHeader.Set(key, value)
+	}
+	sv, err := slack.NewSecretsVerifier(httpHeader, signingSecrets)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	if _, err := sv.Write([]byte(request.Body)); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	if err := sv.Ensure(); err != nil {
+		log.Error("Invalid SIGNING_SECRETS")
+		return err
+	}
+	return nil
 }
 
 func extractTargetInstanceName(instance *ec2.Instance) string {

@@ -18,8 +18,8 @@ export class IncomingWebhookAppStack extends cdk.Stack {
       memorySize: 256, 
       timeout: cdk.Duration.seconds(10),
       environment: {
-        "webHookUrl":"https://hooks.slack.com/services/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",
-        "slackChannel":"CMSS8AQPM"
+        "webHookUrl":"https://hooks.slack.com/services/TMSS8xxxxxx/BMxxxxxx/Pxxxxxxxxxxxxxxxxxx",
+        "slackChannel":"CMSxxxxxxxxxxxx"
       } 
     })
 

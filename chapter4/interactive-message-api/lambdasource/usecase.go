@@ -26,17 +26,17 @@ type InteractiveMessageUsecase interface {
 		APIGatewayProxyResponse, error)
 }
 
-func NewInteractionUsecase(botToken string) InteractiveMessageUsecase {
-	return interactiveMessageUsecase{
-		botToken: botToken,
+func NewInteractionUsecase(signingSecrets string) InteractiveMessageUsecase {
+	return &interactiveMessageUsecase{
+		signingSecrets: signingSecrets,
 	}
 }
 
 type interactiveMessageUsecase struct {
-	botToken string
+	signingSecrets string
 }
 
-func (h interactiveMessageUsecase) MakeSlackResponse(request events.APIGatewayProxyRequest) (events.
+func (i *interactiveMessageUsecase) MakeSlackResponse(request events.APIGatewayProxyRequest) (events.
 	APIGatewayProxyResponse, error) {
 	response := events.APIGatewayProxyResponse{}
 
@@ -54,9 +54,9 @@ func (h interactiveMessageUsecase) MakeSlackResponse(request events.APIGatewayPr
 		return response, errors.New("Invalid method")
 	}
 
-	if message.Token != h.botToken {
-		response.StatusCode = http.StatusUnauthorized
-		return response, errors.New("Invalid token")
+	if err := i.verify(request); err != nil {
+		log.Error(err)
+		return response, err
 	}
 
 	action := message.ActionCallback.AttachmentActions[0]
@@ -147,6 +147,30 @@ func (h interactiveMessageUsecase) MakeSlackResponse(request events.APIGatewayPr
 		response.StatusCode = http.StatusInternalServerError
 		return response, errors.New("Invalid action was submitted")
 	}
+}
+
+func (i *interactiveMessageUsecase) verify(request events.
+	APIGatewayProxyRequest) error {
+	httpHeader := http.Header{}
+	for key, value := range request.Headers {
+		httpHeader.Set(key, value)
+	}
+	sv, err := slack.NewSecretsVerifier(httpHeader, i.signingSecrets)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	if _, err := sv.Write([]byte(request.Body)); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	if err := sv.Ensure(); err != nil {
+		log.Error("Invalid SIGNING_SECRETS")
+		return err
+	}
+	return nil
 }
 
 //ボタンを空にしてresponseを作成
